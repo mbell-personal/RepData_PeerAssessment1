@@ -1,21 +1,78 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+author: "Mike Bell"
+date: "4/12/2021"
 output: 
   html_document:
     keep_md: true
 ---
 
+This analysis makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
-## Loading and preprocessing the data
+The data to be analyzed resides in a file named *activity.zip* that should be contained in the same working directory as the r script or markdown file.
+
+## Load all needed packages
+```{r}
+```
 
 
+## Load and Preprocess the Data
+```{r}
 
-## What is mean total number of steps taken per day?
+# Unzip the file to a file named 'activity.csv' in the same directory
+unzip(zipfile = "activity.zip")
 
+# Load the data into a data frame
+activity <- read.csv(file = "activity.csv")
 
+# Remove all rows having an NA for the steps
+completeActivity <- activity[!(is.na(activity$steps)),]
+```
+
+## What is the mean total number of steps taken per day?
+Create a grouping of steps by date (total steps by date):
+```{r}
+stepsByDate <- aggregate(steps ~ date, completeActivity, FUN = sum)
+```
+
+The first 6 rows of data looks as follows:
+```{r}
+head(stepsByDate)
+```
+
+Generate a histogram of Steps per Day:
+```{r}
+hist(stepsByDate$steps, main="Steps per Day", xlab="Total number of steps in a day")
+```
+
+The following is the summary of Steps per Day.  Note the **Median** of **10,765** steps and the **Mean** of **10,766** steps.
+```{r}
+summary(stepsByDate)
+```
 
 ## What is the average daily activity pattern?
+For each 5 minute interval measured, compute the average number of steps taken across all days.
+```{r}
+stepsByInterval <- aggregate(steps ~ interval, completeActivity, mean)
 
+head(stepsByInterval)
+```
+
+A time series plot showing the average daily pattern:
+```{r}
+plot(x = stepsByInterval$interval, y = stepsByInterval$steps, type='l', 
+     main="Average Number of Steps (all days)", xlab="Interval", 
+     ylab="Average Number of Steps")
+```
+
+```{r}
+# Find row with maximum number of average steps
+rowWithMaxSteps <- which.max(stepsByInterval$steps)
+# Find the interval for that row
+stepsByInterval[rowWithMaxSteps,]
+```
+
+*The maximum number of average steps (across all days) occurs at interval 835 (206.1698 steps).*
 
 
 ## Imputing missing values
