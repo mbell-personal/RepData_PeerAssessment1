@@ -76,7 +76,43 @@ stepsByInterval[rowWithMaxSteps,]
 
 
 ## Imputing missing values
+```{r}
+    sum(is.na(activity))
+```
+*There are 2,304 rows with NA's.*
 
+We will fill in each missing steps value (an NA) with the mean of steps for that same interval accross all all days.
+```{r}
+paddedActivity <- activity
+for (i in 1:nrow(paddedActivity))
+{
+    if (is.na(paddedActivity$steps[i]))
+    {
+        # Get the mean value of steps for the specified interval (all non-NA rows)
+        stepsMean <- stepsByInterval[stepsByInterval$interval == paddedActivity$interval[i],]
+        
+        # Update the current (currently NA) to the mean value
+        paddedActivity$steps[i] <- stepsMean$steps
+    }
+}
+```
 
+```{r}
+    sum(is.na(paddedActivity))
+```
+
+*Now there are 0 rows with missing values*
+
+Compute the total number of steps by day.
+```{r}
+
+totalStepsByDay <- aggregate(steps ~ date, paddedActivity, sum)
+
+head(totalStepsByDay)
+```
+
+```{r}
+hist(totalStepsByDay$steps, main="Total Steps per Day", xlab="Total Steps in a Day")
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
