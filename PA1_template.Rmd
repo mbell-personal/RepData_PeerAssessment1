@@ -13,6 +13,7 @@ The data to be analyzed resides in a file named *activity.zip* that should be co
 
 ## Load all needed packages
 ```{r}
+library(ggplot2)
 ```
 
 
@@ -83,22 +84,22 @@ stepsByInterval[rowWithMaxSteps,]
 
 We will fill in each missing steps value (an NA) with the mean of steps for that same interval accross all all days.
 ```{r}
-paddedActivity <- activity
-for (i in 1:nrow(paddedActivity))
+filledActivity <- activity
+for (i in 1:nrow(filledActivity))
 {
-    if (is.na(paddedActivity$steps[i]))
+    if (is.na(filledActivity$steps[i]))
     {
         # Get the mean value of steps for the specified interval (all non-NA rows)
-        stepsMean <- stepsByInterval[stepsByInterval$interval == paddedActivity$interval[i],]
+        stepsMean <- stepsByInterval[stepsByInterval$interval == filledActivity$interval[i],]
         
         # Update the current (currently NA) to the mean value
-        paddedActivity$steps[i] <- stepsMean$steps
+        filledActivity$steps[i] <- stepsMean$steps
     }
 }
 ```
 
 ```{r}
-    sum(is.na(paddedActivity))
+    sum(is.na(filledActivity))
 ```
 
 *Now there are 0 rows with missing values*
@@ -106,13 +107,64 @@ for (i in 1:nrow(paddedActivity))
 Compute the total number of steps by day.
 ```{r}
 
-totalStepsByDay <- aggregate(steps ~ date, paddedActivity, sum)
+filledActivityTotalStepsByDate <- aggregate(steps ~ date, filledActivity, sum)
 
-head(totalStepsByDay)
+head(filledActivityTotalStepsByDate)
 ```
 
 ```{r}
-hist(totalStepsByDay$steps, main="Total Steps per Day", xlab="Total Steps in a Day")
+hist(filledActivityTotalStepsByDate$steps, main="Total Steps per Day", xlab="Total Steps in a Day")
 ```
 
+
+
+
+The following is the summary of Steps per Day after filling in missing values.  Note the **Median** of **10,766** steps and the **Mean** of **10,766** steps.
+
+```{r}
+summary(filledActivityTotalStepsByDate)
+```
+As a reminder, the **Median** is **10,765** and the **Mean** is **10,766** steps excluding misssing values.
+```{r}
+summary(stepsByDate)
+```
+
+So, filling values did not impact the mean but slightly changed the median which seems reasonable since missing values were filled in with the mean.
+
+
 ## Are there differences in activity patterns between weekdays and weekends?
+
+First, add a new attribute 'typeOfDay' indicating weekday or weekend
+```{r}
+filledActivity['typeOfDay'] <- weekdays(as.Date(filledActivity$date))
+filledActivity$typeOfDay[filledActivity$typeOfDay  %in% c('Saturday','Sunday') ] <- "weekend"
+filledActivity$typeOfDay[filledActivity$typeOfDay != "weekend"] <- "weekday"
+```
+
+```{r}
+head(filledActivity)
+```
+
+Convert typeOfDay  from character to factor
+```{r}
+filledActivity$typeOfDay <- as.factor(filledActivity$typeOfDay)
+```
+
+Calculate average steps by interval and type of day (weekday vs weekend)
+```{r}
+filledActivityStepsByIntervall <- aggregate(steps ~ interval + typeOfDay, filledActivity, mean)
+
+head(filledActivityStepsByIntervall, 12)
+```
+
+Plot as a time series to show the differences betweeen weekend and weekday for each interval.
+```{r}
+qplot(interval, 
+      steps, 
+      data = filledActivityStepsByIntervall, 
+      geom=c("line"),
+      xlab = "Interval", 
+      ylab = "Number of steps", 
+      main = "") +
+  facet_wrap(~ typeOfDay, ncol = 1)
+```
